@@ -2,7 +2,6 @@ package product
 
 import (
 	"fmt"
-
 	"github.com/ozonmp/omp-bot/internal/model/recomendation"
 )
 
@@ -16,10 +15,13 @@ type ProductService interface {
 
 type DummyProductService struct {
 	products map[uint64]recomendation.Product
+	nextId   uint64
 }
 
 func NewDummyProductService() *DummyProductService {
-	return &DummyProductService{}
+	return &DummyProductService{
+		products: make(map[uint64]recomendation.Product),
+	}
 }
 
 func (service *DummyProductService) Describe(productID uint64) (*recomendation.Product, error) {
@@ -31,17 +33,58 @@ func (service *DummyProductService) Describe(productID uint64) (*recomendation.P
 }
 
 func (service *DummyProductService) List(cursor uint64, limit uint64) ([]recomendation.Product, error) {
-	return nil, nil
+	mapSize := len(service.products)
+
+	if cursor > uint64(mapSize) {
+		return nil, fmt.Errorf("DummyProductService.List: cursor out of range")
+	}
+
+	productsList := make([]recomendation.Product, 0, mapSize)
+
+	var pos uint64
+
+	for _, product := range service.products {
+		if pos >= cursor && pos < cursor+limit {
+			productsList = append(productsList, product)
+		}
+		pos++
+		if pos >= cursor+limit {
+			break
+		}
+	}
+
+	return productsList, nil
 }
 
-func (service *DummyProductService) Create(recomendation.Product) (uint64, error) {
-	return 0, nil
+func (service *DummyProductService) Create(r recomendation.Product) (uint64, error) {
+
+	service.nextId++
+
+	r.Id = service.nextId
+
+	service.products[r.Id] = r
+
+	return service.nextId, nil
 }
 
 func (service *DummyProductService) Update(productID uint64, product recomendation.Product) error {
+	if _, ok := service.products[productID]; !ok {
+		return fmt.Errorf("DummyProductService.Update: product %d does not exist", productID)
+	}
+
+	service.products[productID] = product
+
 	return nil
 }
 
 func (service *DummyProductService) Remove(productID uint64) (bool, error) {
-	return false, nil
+	var ok bool
+
+	if _, ok = service.products[productID]; !ok {
+		return false, fmt.Errorf("DummyProductService.Remove: product %d does not exist", productID)
+	}
+
+	delete(service.products, productID)
+
+	return ok, nil
 }

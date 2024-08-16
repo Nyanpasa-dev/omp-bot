@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/ozonmp/omp-bot/internal/app/commands/recomendation"
 	"log"
 	"runtime/debug"
 
@@ -24,7 +25,7 @@ type Router struct {
 	// access
 	// buy
 	// delivery
-	// recommendation
+	recommendation recomendation.Commander
 	// travel
 	// loyalty
 	// bank
@@ -59,7 +60,7 @@ func NewRouter(
 		// access
 		// buy
 		// delivery
-		// recommendation
+		recommendation: recomendation.NewRecomendationCommander(bot),
 		// travel
 		// loyalty
 		// bank

@@ -1,6 +1,7 @@
 package recomendation
 
 import (
+	"github.com/ozonmp/omp-bot/internal/app/commands/recomendation/product"
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -13,12 +14,14 @@ type Commander interface {
 }
 
 type RecomendationCommander struct {
-	bot *tgbotapi.BotAPI
+	bot              *tgbotapi.BotAPI
+	productCommander product.Commander
 }
 
 func NewRecomendationCommander(bot *tgbotapi.BotAPI) *RecomendationCommander {
 	return &RecomendationCommander{
-		bot: bot,
+		bot:              bot,
+		productCommander: product.NewProductCommander(bot),
 	}
 }
 
@@ -34,7 +37,7 @@ func (c *RecomendationCommander) HandleCallback(callback *tgbotapi.CallbackQuery
 func (c *RecomendationCommander) HandleCommand(msg *tgbotapi.Message, commandPath path.CommandPath) {
 	switch commandPath.Subdomain {
 	case "product":
-		c.HandleCommand(msg, commandPath)
+		c.productCommander.HandleCommand(msg, commandPath)
 	default:
 		log.Printf("RecomendationCommander.HandleCommand: unknown product - %s", commandPath.Subdomain)
 	}
